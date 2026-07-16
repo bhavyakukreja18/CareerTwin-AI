@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Profile {
+  id                 String       @id @default(uuid())
+  fullName           String
+  email              String       @unique
+  currentRole        String
+  yearsExperience    Int
+  goals              String[]
+  locationPreference String
+  linkedinUrl        String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  twins              Twin[]
+  simulations        Simulation[]
+  reports            Report[]
+}
+
+model Twin {
+  id           String   @id @default(uuid())
+  profileId    String
+  summary      String
+  strengths    String[]
+  growthAreas  String[]
+  confidenceMin Float
+  confidenceMax Float
+  createdAt    DateTime @default(now())
+  profile      Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model Simulation {
+  id            String   @id @default(uuid())
+  profileId     String
+  recommendation String
+  assumptions   String[]
+  tradeoffs     String[]
+  confidenceMin Float
+  confidenceMax Float
+  scenariosJson Json
+  evidenceJson  Json
+  createdAt     DateTime @default(now())
+  profile       Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  reports       Report[]
+}
+
+model Report {
+  id           String   @id @default(uuid())
+  profileId    String
+  simulationId String
+  title        String
+  audience     String
+  summary      String
+  status       String
+  createdAt    DateTime @default(now())
+  profile      Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  simulation   Simulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+}
