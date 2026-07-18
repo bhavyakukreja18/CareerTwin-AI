@@ -25,7 +25,11 @@ export function Providers({ children }: ProvidersProps) {
 
   return (
     <ClerkProvider>
-      <ThemeProvider attribute="class" defaultTheme="dark">
+      {/* next-themes injects an inline <script> before hydration to avoid a theme flash. React 19
+          warns about any <script> rendered as a React element unless its type is non-executable
+          (e.g. application/json) — this keeps the (harmless, SSR-only) script while silencing that
+          false-positive warning. See https://github.com/pacocoursey/next-themes/issues/387. */}
+      <ThemeProvider attribute="class" defaultTheme="dark" scriptProps={{ type: "application/json" }}>
         <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
       </ThemeProvider>
     </ClerkProvider>

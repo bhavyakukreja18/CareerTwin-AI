@@ -1,6 +1,7 @@
 "use client";
 
-import { SignInButton, SignUpButton, UserButton, useAuth } from "@clerk/nextjs";
+import Link from "next/link";
+import { UserButton, useAuth } from "@clerk/nextjs";
 
 export function AuthControls() {
   const { isSignedIn } = useAuth();
@@ -11,19 +12,18 @@ export function AuthControls() {
 
   return (
     <div className="inline-flex items-center gap-2">
-      <SignInButton mode="modal">
-        <button
-          type="button"
-          className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800"
-        >
-          Sign in
-        </button>
-      </SignInButton>
-      <SignUpButton mode="modal">
-        <button type="button" className="rounded-lg bg-indigo-500 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-400">
-          Sign up
-        </button>
-      </SignUpButton>
+      <Link
+        href="/sign-in"
+        className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)]"
+      >
+        Sign in
+      </Link>
+      <Link
+        href="/sign-up"
+        className="rounded-xl bg-[image:var(--gradient-primary)] px-3 py-2 text-sm font-medium text-white shadow-[var(--shadow-soft)] transition-all hover:brightness-110"
+      >
+        Sign up
+      </Link>
     </div>
   );
 }
