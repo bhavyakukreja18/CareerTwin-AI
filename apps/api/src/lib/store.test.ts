@@ -6,6 +6,7 @@ test("store can create profile and fetch latest twin", () => {
   const profile = store.createProfile({
     clerkUserId: "user_test_123",
     label: "Software Engineer track",
+    profileType: "working_professional",
     fullName: "Test User",
     email: `test-${Date.now()}@careertwin.ai`,
     currentRole: "Software Engineer",
@@ -54,6 +55,7 @@ test("store scopes profile updates to the owning user", () => {
   const profile = store.createProfile({
     clerkUserId: "user_test_456",
     label: "Product track",
+    profileType: "working_professional",
     fullName: "Test User Two",
     email: `test-${Date.now()}-2@careertwin.ai`,
     currentRole: "Product Manager",

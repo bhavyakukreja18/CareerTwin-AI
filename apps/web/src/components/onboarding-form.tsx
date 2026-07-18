@@ -7,11 +7,13 @@ import {
   Bot,
   Briefcase,
   Building2,
+  Check,
   Clock,
   Code2,
-  DollarSign,
+  Compass,
   FolderGit2,
   GraduationCap,
+  IndianRupee,
   Languages,
   Lightbulb,
   Link2,
@@ -37,6 +39,7 @@ import type { InterviewSession } from "@/types/domain";
 
 const schema = z.object({
   label: z.string().max(100).optional().or(z.literal("")),
+  profileType: z.enum(["student", "working_professional", "not_working"]),
   fullName: z.string().min(2, "Enter your full name."),
   email: z.string().email("Enter a valid email."),
   phone: z.string().max(30).optional().or(z.literal("")),
@@ -50,8 +53,9 @@ const schema = z.object({
   preferredRoles: z.array(z.string()).min(1, "Add at least one target role."),
   dreamCompanies: z.array(z.string()),
   preferredCountries: z.array(z.string()),
-  expectedSalary: z.number().int().positive().optional(),
-  currentSalary: z.number().int().positive().optional(),
+  // .min(0) (not .positive()) — 0 is a valid answer for students and anyone not currently earning.
+  expectedSalary: z.number().int().min(0).optional(),
+  currentSalary: z.number().int().min(0).optional(),
   careerMotivation: z.string().min(8, "Tell us what motivates you."),
   workStyle: z.string().min(4, "Describe your preferred work style."),
   riskTolerance: z.enum(["low", "medium", "high"]),
@@ -122,6 +126,58 @@ function mergeUnique(existing: string[], incoming: string[]): string[] {
   return [...new Set([...existing, ...incoming])];
 }
 
+// Salary is captured as a bucketed range (INR, Lakhs Per Annum) rather than free-typed to avoid
+// ambiguous currency entry and keep values comparable across profiles. The stored number is the
+// upper bound of the selected range (0 means "not currently earning").
+const SALARY_RANGE_OPTIONS = [
+  { value: 0, label: "0 LPA — Not currently earning" },
+  { value: 3, label: "Up to 3 LPA" },
+  { value: 6, label: "3 – 6 LPA" },
+  { value: 10, label: "6 – 10 LPA" },
+  { value: 15, label: "10 – 15 LPA" },
+  { value: 20, label: "15 – 20 LPA" },
+  { value: 25, label: "20 – 25 LPA" },
+  { value: 35, label: "25 – 35 LPA" },
+  { value: 50, label: "35 – 50 LPA" },
+  { value: 75, label: "50 – 75 LPA" },
+  { value: 100, label: "75 LPA – 1 Cr" },
+  { value: 150, label: "1 Cr+" }
+];
+
+const PROFILE_TYPE_OPTIONS = [
+  { value: "student" as const, label: "Student", icon: <GraduationCap className="size-3.5" /> },
+  { value: "working_professional" as const, label: "Working professional", icon: <Briefcase className="size-3.5" /> },
+  { value: "not_working" as const, label: "Not currently working", icon: <Compass className="size-3.5" /> }
+];
+
+// Each profile type gets its own reflection set: working professionals are framed around their
+// current job, students around academics/projects (no job history to draw on yet), and people
+// not currently working (career break, laid off, between jobs — but who HAVE worked before)
+// around their most recent role and re-entry motivation, not a job they don't currently have.
+const PROFESSIONAL_REFLECTION_QUESTIONS = [
+  { name: "interviewQ1" as const, question: "Why are you exploring a career change or new opportunity right now?" },
+  { name: "interviewQ2" as const, question: "What kind of work excites you most?" },
+  { name: "interviewQ3" as const, question: "What are your strongest accomplishments and why?" },
+  { name: "interviewQ4" as const, question: "What kind of culture do you avoid?" },
+  { name: "interviewQ5" as const, question: "Where do you want to be in 3 years?" }
+];
+
+const STUDENT_REFLECTION_QUESTIONS = [
+  { name: "interviewQ1" as const, question: "Why are you excited about this career path?" },
+  { name: "interviewQ2" as const, question: "What subjects, courses, or projects do you enjoy the most?" },
+  { name: "interviewQ3" as const, question: "What academic project, internship, or personal project are you most proud of?" },
+  { name: "interviewQ4" as const, question: "What kind of team or company culture would help you thrive?" },
+  { name: "interviewQ5" as const, question: "Where do you want to be professionally in 3 years?" }
+];
+
+const NOT_WORKING_REFLECTION_QUESTIONS = [
+  { name: "interviewQ1" as const, question: "What's motivating you to get back into work right now?" },
+  { name: "interviewQ2" as const, question: "What's the most recent role or project you're proud of, and what was your direct impact?" },
+  { name: "interviewQ3" as const, question: "What leadership moments from your career shaped your confidence?" },
+  { name: "interviewQ4" as const, question: "What kind of company culture do you want to avoid this time around?" },
+  { name: "interviewQ5" as const, question: "Where do you want to be professionally in 3 years?" }
+];
+
 const STEP_META = [
   { title: "You", icon: <User className="size-4" /> },
   { title: "Direction", icon: <Target className="size-4" /> },
@@ -164,6 +220,7 @@ export function OnboardingForm({
     resolver: zodResolver(schema),
     defaultValues: {
       label: "",
+      profileType: "working_professional",
       fullName: "",
       email: "",
       phone: "",
@@ -225,6 +282,11 @@ export function OnboardingForm({
   }, [storageKey, setValue]);
 
   const liveValues = useWatch({ control });
+  // Drives copy/placeholder changes across the form so students, working professionals, and
+  // people currently not working each see language relevant to their situation.
+  const profileType = liveValues?.profileType ?? "working_professional";
+  const isStudent = profileType === "student";
+  const isNotWorking = profileType === "not_working";
 
   useEffect(() => {
     if (!storageKey) return;
@@ -243,6 +305,7 @@ export function OnboardingForm({
       {
         fields: [
           "label",
+          "profileType",
           "fullName",
           "email",
           "phone",
@@ -361,49 +424,124 @@ export function OnboardingForm({
           className="space-y-4"
         >
           {step === 0 ? (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-4">
               <Field
-                label="Profile name"
-                icon={<Sparkles className="size-3.5" />}
-                hint="Name this career profile so you can tell it apart from others you create (e.g. \u201cStaff Engineer track\u201d)."
-                error={errors.label?.message}
-                className="md:col-span-2"
+                label="I am currently a..."
+                icon={<Compass className="size-3.5" />}
+                hint="This shapes the questions we ask you next, so your Career Twin fits your actual situation."
               >
-                <input {...register("label")} className={inputClass} placeholder="e.g. Software Engineer track" />
-              </Field>
-              <Field label="Full name" icon={<User className="size-3.5" />} error={errors.fullName?.message}>
-                <input {...register("fullName")} className={inputClass} placeholder="Ada Lovelace" />
-              </Field>
-              <Field label="Email" icon={<Mail className="size-3.5" />} error={errors.email?.message}>
-                <input {...register("email")} type="email" className={inputClass} placeholder="you@domain.com" />
-              </Field>
-              <Field label="Current role" icon={<Briefcase className="size-3.5" />} error={errors.currentRole?.message}>
-                <input {...register("currentRole")} className={inputClass} placeholder="Senior Software Engineer" />
-              </Field>
-              <Field label="Phone" icon={<Phone className="size-3.5" />} error={errors.phone?.message}>
-                <input {...register("phone")} className={inputClass} placeholder="+1 555 123 4567" />
-              </Field>
-              <Field label="Current company" icon={<Building2 className="size-3.5" />} error={errors.currentCompany?.message}>
-                <input {...register("currentCompany")} className={inputClass} placeholder="Acme Corp" />
-              </Field>
-              <Field label="Years of experience" icon={<Clock className="size-3.5" />} error={errors.yearsExperience?.message}>
-                <input {...register("yearsExperience", { valueAsNumber: true })} type="number" min={0} className={inputClass} />
-              </Field>
-              <Field label="Location preference" icon={<MapPin className="size-3.5" />} error={errors.locationPreference?.message}>
-                <input {...register("locationPreference")} className={inputClass} placeholder="Remote, Bengaluru, ..." />
-              </Field>
-              <Field label="Notice period (weeks)" icon={<Clock className="size-3.5" />} error={errors.noticePeriodWeeks?.message}>
-                <input {...register("noticePeriodWeeks", { valueAsNumber: true })} type="number" min={0} className={inputClass} />
-              </Field>
-              <Field label="Previous companies" icon={<Briefcase className="size-3.5" />} className="md:col-span-2">
                 <Controller
                   control={control}
-                  name="previousCompanies"
+                  name="profileType"
                   render={({ field }) => (
-                    <TagInput value={field.value} onChange={field.onChange} accent="accent-2" placeholder="Google, Stripe..." />
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      {PROFILE_TYPE_OPTIONS.map((option) => {
+                        // Selected uses a solid fill (not just a soft tint) so it can never be mistaken
+                        // for the lighter, border-only hover state on the other, unselected options.
+                        const active = field.value === option.value;
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => field.onChange(option.value)}
+                            className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors ${
+                              active
+                                ? "border-transparent bg-[image:var(--gradient-primary)] text-white shadow-[var(--shadow-soft)]"
+                                : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:border-[var(--accent)]/40 hover:text-[var(--foreground)]"
+                            }`}
+                          >
+                            {active ? <Check className="size-3.5" /> : option.icon}
+                            {option.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   )}
                 />
               </Field>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field
+                  label="Profile name"
+                  icon={<Sparkles className="size-3.5" />}
+                  hint="Name this career profile so you can tell it apart from others you create (e.g. \u201cStaff Engineer track\u201d)."
+                  error={errors.label?.message}
+                  className="md:col-span-2"
+                >
+                  <input {...register("label")} className={inputClass} placeholder="e.g. Software Engineer track" />
+                </Field>
+                <Field label="Full name" icon={<User className="size-3.5" />} error={errors.fullName?.message}>
+                  <input {...register("fullName")} className={inputClass} placeholder="Ada Lovelace" />
+                </Field>
+                <Field label="Email" icon={<Mail className="size-3.5" />} error={errors.email?.message}>
+                  <input {...register("email")} type="email" className={inputClass} placeholder="you@domain.com" />
+                </Field>
+                <Field
+                  label={isStudent ? "Field of study / target role" : isNotWorking ? "Most recent role" : "Current role"}
+                  icon={<Briefcase className="size-3.5" />}
+                  error={errors.currentRole?.message}
+                >
+                  <input
+                    {...register("currentRole")}
+                    className={inputClass}
+                    placeholder={
+                      isStudent
+                        ? "Computer Science student, aspiring SDE"
+                        : isNotWorking
+                          ? "Senior Software Engineer (last role held)"
+                          : "Senior Software Engineer"
+                    }
+                  />
+                </Field>
+                <Field label="Phone" icon={<Phone className="size-3.5" />} error={errors.phone?.message}>
+                  <input {...register("phone")} className={inputClass} placeholder="+1 555 123 4567" />
+                </Field>
+                <Field
+                  label={isStudent ? "College / university" : isNotWorking ? "Most recent company" : "Current company"}
+                  icon={<Building2 className="size-3.5" />}
+                  error={errors.currentCompany?.message}
+                >
+                  <input {...register("currentCompany")} className={inputClass} placeholder={isStudent ? "IIT Delhi" : "Acme Corp"} />
+                </Field>
+                <Field
+                  label="Years of experience"
+                  icon={<Clock className="size-3.5" />}
+                  hint={
+                    isStudent
+                      ? "0 is perfectly fine if you're still studying."
+                      : isNotWorking
+                        ? "Total experience from before your break."
+                        : undefined
+                  }
+                  error={errors.yearsExperience?.message}
+                >
+                  <input {...register("yearsExperience", { valueAsNumber: true })} type="number" min={0} className={inputClass} />
+                </Field>
+                <Field label="Location preference" icon={<MapPin className="size-3.5" />} error={errors.locationPreference?.message}>
+                  <input {...register("locationPreference")} className={inputClass} placeholder="Remote, Bengaluru, ..." />
+                </Field>
+                <Field label="Notice period (weeks)" icon={<Clock className="size-3.5" />} error={errors.noticePeriodWeeks?.message}>
+                  <input {...register("noticePeriodWeeks", { valueAsNumber: true })} type="number" min={0} className={inputClass} />
+                </Field>
+                <Field
+                  label={isStudent ? "Internships" : "Previous companies"}
+                  icon={<Briefcase className="size-3.5" />}
+                  className="md:col-span-2"
+                >
+                  <Controller
+                    control={control}
+                    name="previousCompanies"
+                    render={({ field }) => (
+                      <TagInput
+                        value={field.value}
+                        onChange={field.onChange}
+                        accent="accent-2"
+                        placeholder={isStudent ? "Summer internship at..." : "Google, Stripe..."}
+                      />
+                    )}
+                  />
+                </Field>
+              </div>
             </div>
           ) : null}
 
@@ -446,15 +584,57 @@ export function OnboardingForm({
                     )}
                   />
                 </Field>
-                <Field label="Expected salary" icon={<Wallet className="size-3.5" />}>
-                  <input {...register("expectedSalary", { valueAsNumber: true })} type="number" min={0} className={inputClass} />
+                <Field
+                  label={isStudent ? "Expected starting salary (LPA, INR)" : "Expected salary (LPA, INR)"}
+                  icon={<Wallet className="size-3.5" />}
+                >
+                  <select
+                    {...register("expectedSalary", { setValueAs: (v) => (v === "" ? undefined : Number(v)) })}
+                    className={inputClass}
+                  >
+                    <option value="" disabled>
+                      Select a range
+                    </option>
+                    {SALARY_RANGE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </Field>
-                <Field label="Current salary" icon={<DollarSign className="size-3.5" />}>
-                  <input {...register("currentSalary", { valueAsNumber: true })} type="number" min={0} className={inputClass} />
+                <Field
+                  label="Current salary (LPA, INR)"
+                  icon={<IndianRupee className="size-3.5" />}
+                  hint={isStudent || isNotWorking ? "Pick \"Not currently earning\" if that applies to you." : undefined}
+                >
+                  <select
+                    {...register("currentSalary", { setValueAs: (v) => (v === "" ? undefined : Number(v)) })}
+                    className={inputClass}
+                  >
+                    <option value="" disabled>
+                      Select a range
+                    </option>
+                    {SALARY_RANGE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </Field>
               </div>
               <Field label="Career motivation" icon={<Sparkles className="size-3.5" />} error={errors.careerMotivation?.message}>
-                <textarea {...register("careerMotivation")} rows={2} className={inputClass} placeholder="What drives you forward?" />
+                <textarea
+                  {...register("careerMotivation")}
+                  rows={2}
+                  className={inputClass}
+                  placeholder={
+                    isStudent
+                      ? "What draws you to this career path?"
+                      : isNotWorking
+                        ? "What's motivating your next move?"
+                        : "What drives you forward?"
+                  }
+                />
               </Field>
               <div className="grid gap-4 md:grid-cols-2">
                 <Field label="Preferred work style" icon={<Briefcase className="size-3.5" />} error={errors.workStyle?.message}>
@@ -532,13 +712,12 @@ export function OnboardingForm({
                 A few reflection questions to establish your Twin&apos;s voice — right after this, a live AI interviewer will
                 ask deeper follow-ups before your Career Twin is built.
               </p>
-              {[
-                { name: "interviewQ1" as const, question: "Why do you want to change jobs right now?" },
-                { name: "interviewQ2" as const, question: "What kind of work excites you most?" },
-                { name: "interviewQ3" as const, question: "What are your strongest accomplishments and why?" },
-                { name: "interviewQ4" as const, question: "What kind of culture do you avoid?" },
-                { name: "interviewQ5" as const, question: "Where do you want to be in 3 years?" }
-              ].map((item, index) => (
+              {(isStudent
+                ? STUDENT_REFLECTION_QUESTIONS
+                : isNotWorking
+                  ? NOT_WORKING_REFLECTION_QUESTIONS
+                  : PROFESSIONAL_REFLECTION_QUESTIONS
+              ).map((item, index) => (
                 <motion.div
                   key={item.name}
                   initial={{ opacity: 0, y: 8 }}
@@ -601,7 +780,7 @@ export function OnboardingForm({
                       />
                       <Button
                         type="button"
-                        variant="soft"
+                        variant="primary"
                         onClick={onSubmitInterviewAnswer}
                         disabled={isSubmittingInterviewAnswer || !interviewAnswer.trim()}
                       >
@@ -619,7 +798,7 @@ export function OnboardingForm({
       <div className="flex items-center justify-between border-t border-[var(--border-soft)] pt-4">
         <Button
           type="button"
-          variant="ghost"
+          variant="outline"
           onClick={() => setStep((prev) => Math.max(prev - 1, 0))}
           disabled={step === 0 || isSubmitting || isSavingProfile}
         >

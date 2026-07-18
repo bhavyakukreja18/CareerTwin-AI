@@ -1,6 +1,6 @@
 import { logger } from "./logger.js";
 import { getPrismaClient } from "./prisma.js";
-import type { AnalysisResult, InterviewSession, Profile, Report, SimulationResult, Twin } from "../types/domain.js";
+import type { AnalysisResult, InterviewSession, Profile, ProfileType, Report, SimulationResult, Twin } from "../types/domain.js";
 
 function toJson(value: unknown): string {
   return JSON.stringify(value);
@@ -30,6 +30,7 @@ export const persistence = {
         id: profile.id,
         clerkUserId: profile.clerkUserId,
         label: profile.label,
+        profileType: profile.profileType,
         fullName: profile.fullName,
         email: profile.email,
         phone: profile.phone,
@@ -64,6 +65,7 @@ export const persistence = {
       },
       update: {
         label: profile.label,
+        profileType: profile.profileType,
         fullName: profile.fullName,
         email: profile.email,
         phone: profile.phone,
@@ -262,6 +264,7 @@ export const persistence = {
           id: profile.id,
           clerkUserId: profile.clerkUserId,
           label: profile.label ?? profile.currentRole,
+          profileType: (profile.profileType ?? "working_professional") as ProfileType,
           fullName: profile.fullName,
           email: profile.email,
           phone: profile.phone ?? undefined,

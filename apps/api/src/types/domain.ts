@@ -5,12 +5,19 @@ export interface WorkExperienceEntry {
   description?: string;
 }
 
+// Distinguishes students (no/limited work history) from working professionals and people
+// currently not working (career break, between jobs, etc.) — drives which onboarding fields,
+// reflection questions, and AI interview questions are shown so the product works for anyone,
+// not just employed professionals.
+export type ProfileType = "student" | "working_professional" | "not_working";
+
 export interface Profile {
   id: string;
   clerkUserId: string;
   // User-facing name distinguishing this profile from others owned by the same account
   // (e.g. "Software Engineer track" vs "Product Management pivot").
   label: string;
+  profileType: ProfileType;
   fullName: string;
   email: string;
   phone?: string;

@@ -54,6 +54,7 @@ async function request<T>(path: string, options: RequestOptions): Promise<T> {
 
 export interface UpsertProfilePayload {
   label?: string;
+  profileType: "student" | "working_professional" | "not_working";
   fullName: string;
   email: string;
   phone?: string;
@@ -247,7 +248,7 @@ export function suggestScenarios(profileId: string, userId: string): Promise<{ s
   });
 }
 
-export async function downloadReportPdf(reportId: string, userId: string): Promise<void> {
+export async function downloadReportPdf(reportId: string, userId: string, fullName?: string): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/v1/reports/${reportId}/pdf`, {
     headers: { "x-clerk-user-id": userId },
     cache: "no-store"
@@ -258,8 +259,9 @@ export async function downloadReportPdf(reportId: string, userId: string): Promi
   const blob = await response.blob();
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
+  const safeName = fullName?.trim().replace(/[^a-zA-Z0-9\s-]/g, "").replace(/\s+/g, " ").trim();
   link.href = url;
-  link.download = `careertwin-report-${reportId}.pdf`;
+  link.download = `${safeName || "CareerTwin Report"}.pdf`;
   document.body.appendChild(link);
   link.click();
   link.remove();

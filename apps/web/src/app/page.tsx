@@ -59,6 +59,7 @@ function mapProfileToOnboardingDraft(profile: Profile): Partial<OnboardingValues
   const [interviewQ1, interviewQ2, interviewQ3, interviewQ4, interviewQ5] = profile.interviewInsights;
   return {
     label: profile.label,
+    profileType: profile.profileType,
     fullName: profile.fullName,
     email: profile.email,
     phone: profile.phone,
@@ -299,6 +300,7 @@ export default function Home() {
   function buildProfilePayload(values: OnboardingValues) {
     return {
       label: values.label || undefined,
+      profileType: values.profileType,
       fullName: values.fullName,
       email: values.email,
       phone: values.phone || undefined,
@@ -1140,7 +1142,11 @@ export default function Home() {
                         type="button"
                         variant="soft"
                         size="sm"
-                        onClick={() => downloadReportPdf(report.id, userId!).catch((error) => notify((error as Error).message, "error"))}
+                        onClick={() =>
+                          downloadReportPdf(report.id, userId!, activeProfile?.fullName).catch((error) =>
+                            notify((error as Error).message, "error")
+                          )
+                        }
                       >
                         <Download className="size-3.5" />
                         Download PDF
@@ -1158,7 +1164,9 @@ export default function Home() {
                 scenarios={displayedSimulation?.scenarios}
                 onClose={() => setSelectedReportId(null)}
                 onDownloadPdf={() =>
-                  downloadReportPdf(reportDetailQuery.data!.report.id, userId!).catch((error) => notify((error as Error).message, "error"))
+                  downloadReportPdf(reportDetailQuery.data!.report.id, userId!, activeProfile?.fullName).catch((error) =>
+                    notify((error as Error).message, "error")
+                  )
                 }
               />
             ) : null}

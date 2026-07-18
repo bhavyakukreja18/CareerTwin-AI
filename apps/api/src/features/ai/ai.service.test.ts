@@ -9,6 +9,7 @@ test("AI service returns structured fallback output without key", async () => {
       id: randomUUID(),
       clerkUserId: "user_ai_test",
       label: "AI Product Manager track",
+      profileType: "working_professional",
       fullName: "Taylor Test",
       email: "taylor@test.dev",
       currentRole: "Product Engineer",

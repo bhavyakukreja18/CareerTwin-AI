@@ -88,8 +88,9 @@ reportRouter.get("/:reportId/pdf", (req: Request, res: Response) => {
   const scorecard = buildCareerScorecard(profile, store.listAnalyses(profile.id));
   const pdf = buildReportPdfStream({ report, profile, simulation, scorecard });
 
+  const safeName = profile.fullName.trim().replace(/[^a-zA-Z0-9\s-]/g, "").replace(/\s+/g, " ").trim();
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename="careertwin-report-${report.id}.pdf"`);
+  res.setHeader("Content-Disposition", `attachment; filename="${safeName || "CareerTwin Report"}.pdf"`);
   pdf.pipe(res);
 
   return undefined;

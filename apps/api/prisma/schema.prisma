@@ -13,6 +13,8 @@ model Profile {
   // career tracks) which the user switches between in the UI.
   clerkUserId        String
   label              String       @default("")
+  // "student" | "working_professional" | "not_working" — see ProfileType in api/src/types/domain.ts.
+  profileType        String       @default("working_professional")
   fullName           String
   // Not unique — the same person's email appears across every profile they own.
   email              String

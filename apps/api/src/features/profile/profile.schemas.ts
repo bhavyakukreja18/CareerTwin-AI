@@ -9,6 +9,7 @@ const workExperienceSchema = z.object({
 
 export const upsertProfileSchema = z.object({
   label: z.string().min(1).max(100).optional(),
+  profileType: z.enum(["student", "working_professional", "not_working"]).default("working_professional"),
   fullName: z.string().min(2),
   email: z.string().email(),
   phone: z.string().max(30).optional(),
@@ -22,8 +23,9 @@ export const upsertProfileSchema = z.object({
   dreamCompanies: z.array(z.string().min(2)).default([]),
   preferredCountries: z.array(z.string().min(2)).default([]),
   locationPreference: z.string().min(2),
-  expectedSalary: z.number().int().positive().optional(),
-  currentSalary: z.number().int().positive().optional(),
+  // .min(0) (not .positive()) — 0 is a valid answer for students and anyone not currently earning.
+  expectedSalary: z.number().int().min(0).optional(),
+  currentSalary: z.number().int().min(0).optional(),
   noticePeriodWeeks: z.number().int().min(0).max(52).optional(),
   education: z.array(z.string().min(2)).default([]),
   technicalSkills: z.array(z.string().min(1)).default([]),
