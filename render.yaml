@@ -1,0 +1,62 @@
+# Render Blueprint — deploys both services straight from this repo.
+# Render docs: https://render.com/docs/blueprint-spec
+#
+# Usage: in the Render dashboard, "New +" -> "Blueprint" -> point at this repo.
+# Render reads this file, provisions both services below, and re-deploys on every push.
+# Secrets marked `sync: false` must be entered once in the Render dashboard after the
+# first deploy — they are intentionally not stored in this file or in git.
+services:
+  - type: web
+    name: careertwin-api
+    runtime: node
+    plan: starter
+    region: oregon
+    rootDir: .
+    buildCommand: npm run render-build:api
+    startCommand: npm run start:api
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false # your deployed frontend URL, e.g. https://careertwin.vercel.app — used for CORS
+      - key: USE_DATABASE
+        value: "false" # the API runs on an in-memory store until this is "true" AND DATABASE_URL is set
+      - key: DATABASE_URL
+        sync: false # NOTE: prisma/schema.prisma needs its Prisma 7 datasource config migrated
+        # (see apps/api/src/lib/prisma.ts) before this actually persists data — the build step
+        # tolerates prisma generate failing so an in-memory deploy still works either way.
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: CLERK_WEBHOOK_SECRET
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL_FAST
+        value: gemini-flash-latest
+      - key: GEMINI_MODEL_REASONING
+        value: gemini-flash-latest
+      - key: AI_PROVIDER_PRIMARY
+        value: gemini
+      - key: AI_PROVIDER_FALLBACK
+        value: mock
+
+  - type: web
+    name: careertwin-web
+    runtime: node
+    plan: starter
+    region: oregon
+    rootDir: .
+    buildCommand: npm run render-build:web
+    startCommand: npm run start:web -- -p $PORT
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_BASE_URL
+        sync: false # the careertwin-api service URL above, e.g. https://careertwin-api.onrender.com
+      - key: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false

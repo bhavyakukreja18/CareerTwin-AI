@@ -2,16 +2,31 @@
   "name": "careertwin-ai",
   "private": true,
   "version": "0.1.0",
+  "engines": {
+    "node": ">=20"
+  },
   "workspaces": [
     "apps/*"
   ],
   "scripts": {
+    "dev": "concurrently -n API,WEB -c blue,magenta \"npm run dev:api\" \"npm run dev:web\"",
     "dev:web": "npm run dev --workspace web",
     "dev:api": "npm run dev --workspace api",
+    "build": "npm run build:api && npm run build:web",
     "build:web": "npm run build --workspace web",
     "build:api": "npm run build --workspace api",
+    "start": "concurrently -n API,WEB -c blue,magenta \"npm run start:api\" \"npm run start:web\"",
+    "start:web": "npm run start --workspace web",
+    "start:api": "npm run start --workspace api",
     "lint:web": "npm run lint --workspace web",
     "typecheck:web": "npm run typecheck --workspace web",
-    "typecheck:api": "npm run typecheck --workspace api"
+    "typecheck:api": "npm run typecheck --workspace api",
+    "typecheck": "npm run typecheck:api && npm run typecheck:web",
+    "test:api": "npm run test --workspace api",
+    "render-build:api": "npm install && (npm run prisma:generate --workspace api || true) && npm run build:api",
+    "render-build:web": "npm install && npm run build:web"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.3"
   }
 }

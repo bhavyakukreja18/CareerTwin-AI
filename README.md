@@ -179,39 +179,127 @@ Current process reflected in docs:
 
 ### Prerequisites
 
+- Node.js 20+ and npm
 - Git
-- Modern browser (for viewing documentation)
-- Optional: local static file server
 
 ### Installation
 
 ```bash
 git clone <repository-url>
 cd CareerTwin-AI
+npm install
 ```
 
 ### Environment Variables
 
-Product runtime environment variables: **To be decided**  
-(Implementation has not started; see `10-Engineering-Implementation/03-Engineering-Questions.html`.)
+Copy `.env.example` to `.env` at the repo root and fill in the values you have (Gemini API key,
+Clerk keys, database/Redis/storage credentials, etc.). Both `apps/api` and `apps/web` read from
+this single root `.env` — `apps/web/.env.local` is a symlink to it so Next.js picks it up too.
+
+```bash
+cp .env.example .env
+```
 
 ### Running Locally
 
-This repository is currently documentation-first. Open any `index.html` in folders `00` to `10`, or serve locally:
+Runs both the API and the web app together with one command (prefixed, color-coded output):
 
 ```bash
-python3 -m http.server 8080
+npm run dev
 ```
 
-Then visit [http://localhost:8080](http://localhost:8080).
+- API: `http://localhost:4000` by default (`PORT` in `.env`)
+- Web: `http://localhost:3000`
+
+Run them individually if you only need one:
+
+```bash
+npm run dev:api   # API only
+npm run dev:web   # Web app only
+```
 
 ### Development Commands
 
-Implementation code commands: **To be decided**
+| Command | Runs |
+|---|---|
+| `npm run dev` | API + web together (single command, local dev) |
+| `npm run dev:api` | API only (`tsx watch`) |
+| `npm run dev:web` | Web app only (`next dev`) |
+| `npm run typecheck` | Typecheck both packages |
+| `npm run typecheck:api` / `npm run typecheck:web` | Typecheck one package |
+| `npm run lint:web` | Lint the web app (ESLint) |
+| `npm run test:api` | Run the API's test suite |
 
 ### Build Commands
 
-Application build pipeline: **To be decided**
+| Command | Builds |
+|---|---|
+| `npm run build` | Both packages, API first then web |
+| `npm run build:api` | API only (`tsc` → `apps/api/dist`) |
+| `npm run build:web` | Web app only (`next build`) |
+
+### Running a Production Build Locally
+
+```bash
+npm run build
+npm run start
+```
+
+`npm run start` runs `apps/api` (`node dist/index.js`) and `apps/web` (`next start`) together, the
+same way most hosting platforms will run them in production.
+
+---
+
+## Deployment
+
+The API (`apps/api`) is a persistent Node/Express server — deploy it anywhere that runs a
+long-lived Node process (Render, Railway, Fly.io, a VM, Docker). The web app (`apps/web`) is a
+standard Next.js app — deploy it on Vercel, or alongside the API on any of the platforms above.
+
+### Render (API, and/or web)
+
+A [`render.yaml`](./render.yaml) Blueprint at the repo root provisions both services in one go:
+
+1. In the Render dashboard: **New +** → **Blueprint** → point it at this repo/branch.
+2. Render provisions `careertwin-api` and `careertwin-web`, each built and started from the repo
+   root via npm workspaces (`npm run render-build:api` / `npm run start:api`, and the web
+   equivalents).
+3. Fill in the secrets marked `sync: false` in `render.yaml` (Clerk keys, Gemini key, database
+   URL, `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_APP_URL`) once in the dashboard — they are
+   intentionally not committed to git.
+4. The API exposes `GET /health` for Render's health checks.
+
+You can deploy just the API this way and use Vercel for the web app instead — remove the
+`careertwin-web` block from `render.yaml` (or leave it; unused Blueprint services cost nothing
+until deployed).
+
+### Vercel (web app)
+
+A [`vercel.json`](./vercel.json) at the repo root configures the monorepo build without needing to
+change the project's Root Directory setting:
+
+1. Import this repo into Vercel as a new project (leave **Root Directory** as the repo root).
+2. Vercel reads `vercel.json` and runs `npm install` then `npm run build:web`, publishing
+   `apps/web/.next`.
+3. Set the web app's environment variables in the Vercel dashboard: `NEXT_PUBLIC_API_BASE_URL`
+   (pointing at your deployed API), `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`.
+
+Vercel is not a good fit for the API as-is (it's a persistent Express server, not a set of
+serverless functions) — deploy the API on Render/Railway/Fly and point the Vercel-hosted web app
+at it via `NEXT_PUBLIC_API_BASE_URL`.
+
+### Any other Node host
+
+The API and web app only need two commands anywhere that runs Node 20+:
+
+```bash
+npm install
+npm run build:api   # or build:web
+npm run start:api   # or start:web -- -p $PORT
+```
+
+Set `NEXT_PUBLIC_APP_URL` (on the API) to your deployed frontend origin so CORS allows it, and
+`NEXT_PUBLIC_API_BASE_URL` (on the web app) to your deployed API origin.
 
 ---
 
