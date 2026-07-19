@@ -34,6 +34,7 @@ import { LoadingState, SuccessState } from "@/components/state-blocks";
 import { Button } from "@/components/ui/button";
 import { Field, inputClass } from "@/components/ui/field";
 import { ProgressSteps } from "@/components/ui/progress-steps";
+import { SelectOrOther } from "@/components/ui/select-or-other";
 import { TagInput } from "@/components/ui/tag-input";
 import type { InterviewSession } from "@/types/domain";
 
@@ -142,6 +143,41 @@ const SALARY_RANGE_OPTIONS = [
   { value: 75, label: "50 – 75 LPA" },
   { value: 100, label: "75 LPA – 1 Cr" },
   { value: 150, label: "1 Cr+" }
+];
+
+const LOCATION_PREFERENCE_OPTIONS = [
+  { value: "Remote", label: "Remote (anywhere)" },
+  { value: "Bengaluru", label: "Bengaluru" },
+  { value: "Hyderabad", label: "Hyderabad" },
+  { value: "Pune", label: "Pune" },
+  { value: "Mumbai", label: "Mumbai" },
+  { value: "Delhi NCR", label: "Delhi NCR" },
+  { value: "Chennai", label: "Chennai" },
+  { value: "Kolkata", label: "Kolkata" },
+  { value: "Open to relocate (India)", label: "Open to relocate (India)" },
+  { value: "Open to relocate (International)", label: "Open to relocate (International)" }
+];
+
+const WORK_STYLE_OPTIONS = [
+  { value: "Remote-first, high autonomy", label: "Remote-first, high autonomy" },
+  { value: "Hybrid, balanced structure", label: "Hybrid, balanced structure" },
+  { value: "In-office, collaborative", label: "In-office, collaborative" },
+  { value: "Fast-paced startup environment", label: "Fast-paced startup environment" },
+  { value: "Structured, process-driven", label: "Structured, process-driven" },
+  { value: "Async-first, flexible hours", label: "Async-first, flexible hours" }
+];
+
+const COMMON_COUNTRIES = [
+  "India",
+  "United States",
+  "United Kingdom",
+  "Canada",
+  "Germany",
+  "Australia",
+  "Singapore",
+  "United Arab Emirates",
+  "Netherlands",
+  "France"
 ];
 
 const PROFILE_TYPE_OPTIONS = [
@@ -287,6 +323,16 @@ export function OnboardingForm({
   const profileType = liveValues?.profileType ?? "working_professional";
   const isStudent = profileType === "student";
   const isNotWorking = profileType === "not_working";
+  // Notice period only makes sense for someone currently employed elsewhere.
+  const isCurrentlyEmployed = profileType === "working_professional";
+
+  // Notice period is only relevant while currently employed — clear stale values if the user
+  // switches away from "working professional" after having filled it in.
+  useEffect(() => {
+    if (!isCurrentlyEmployed && getValues("noticePeriodWeeks") !== undefined) {
+      setValue("noticePeriodWeeks", undefined, { shouldDirty: true });
+    }
+  }, [isCurrentlyEmployed, getValues, setValue]);
 
   useEffect(() => {
     if (!storageKey) return;
@@ -518,11 +564,19 @@ export function OnboardingForm({
                   <input {...register("yearsExperience", { valueAsNumber: true })} type="number" min={0} className={inputClass} />
                 </Field>
                 <Field label="Location preference" icon={<MapPin className="size-3.5" />} error={errors.locationPreference?.message}>
-                  <input {...register("locationPreference")} className={inputClass} placeholder="Remote, Bengaluru, ..." />
+                  <Controller
+                    control={control}
+                    name="locationPreference"
+                    render={({ field }) => (
+                      <SelectOrOther value={field.value} onChange={field.onChange} options={LOCATION_PREFERENCE_OPTIONS} />
+                    )}
+                  />
                 </Field>
-                <Field label="Notice period (weeks)" icon={<Clock className="size-3.5" />} error={errors.noticePeriodWeeks?.message}>
-                  <input {...register("noticePeriodWeeks", { valueAsNumber: true })} type="number" min={0} className={inputClass} />
-                </Field>
+                {isCurrentlyEmployed ? (
+                  <Field label="Notice period (weeks)" icon={<Clock className="size-3.5" />} error={errors.noticePeriodWeeks?.message}>
+                    <input {...register("noticePeriodWeeks", { valueAsNumber: true })} type="number" min={0} className={inputClass} />
+                  </Field>
+                ) : null}
                 <Field
                   label={isStudent ? "Internships" : "Previous companies"}
                   icon={<Briefcase className="size-3.5" />}
@@ -575,12 +629,37 @@ export function OnboardingForm({
                     )}
                   />
                 </Field>
-                <Field label="Preferred countries" icon={<MapPin className="size-3.5" />}>
+                <Field label="Preferred countries" icon={<MapPin className="size-3.5" />} hint="Tap to add, or type your own below.">
                   <Controller
                     control={control}
                     name="preferredCountries"
                     render={({ field }) => (
-                      <TagInput value={field.value} onChange={field.onChange} accent="accent-2" placeholder="United States, Germany..." />
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap gap-1.5">
+                          {COMMON_COUNTRIES.map((country) => {
+                            const active = field.value.includes(country);
+                            return (
+                              <button
+                                key={country}
+                                type="button"
+                                onClick={() =>
+                                  field.onChange(
+                                    active ? field.value.filter((item) => item !== country) : mergeUnique(field.value, [country])
+                                  )
+                                }
+                                className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${
+                                  active
+                                    ? "bg-[var(--accent-2-soft)] text-[var(--accent-2)]"
+                                    : "border border-[var(--border)] text-[var(--muted)] hover:border-[var(--accent-2)]/40 hover:text-[var(--foreground)]"
+                                }`}
+                              >
+                                {country}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <TagInput value={field.value} onChange={field.onChange} accent="accent-2" placeholder="Other country..." />
+                      </div>
                     )}
                   />
                 </Field>
@@ -638,7 +717,13 @@ export function OnboardingForm({
               </Field>
               <div className="grid gap-4 md:grid-cols-2">
                 <Field label="Preferred work style" icon={<Briefcase className="size-3.5" />} error={errors.workStyle?.message}>
-                  <input {...register("workStyle")} className={inputClass} placeholder="Async, high autonomy..." />
+                  <Controller
+                    control={control}
+                    name="workStyle"
+                    render={({ field }) => (
+                      <SelectOrOther value={field.value} onChange={field.onChange} options={WORK_STYLE_OPTIONS} />
+                    )}
+                  />
                 </Field>
                 <Field label="Risk tolerance" icon={<Target className="size-3.5" />}>
                   <select {...register("riskTolerance")} className={inputClass}>
