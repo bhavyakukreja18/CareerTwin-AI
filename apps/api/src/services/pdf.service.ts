@@ -573,10 +573,42 @@ function drawScorecardSection(doc: PDFKit.PDFDocument, cursor: Cursor, scorecard
   if (scorecard.categories.length % 2 === 1) cursor.y += cardHeight + gap;
 }
 
+// Caps a text block to at most `maxLines` lines (via a height limit PDFKit needs to trigger its
+// own ellipsis truncation) and returns the height it will actually occupy, so callers can size a
+// container around it up front instead of guessing a fixed height and letting AI-length text spill
+// out of it.
+function clampedTextHeight(doc: PDFKit.PDFDocument, text: string, width: number, maxLines: number): number {
+  const lineHeight = doc.currentLineHeight(true);
+  const naturalHeight = doc.heightOfString(text, { width });
+  return Math.min(naturalHeight, lineHeight * maxLines);
+}
+
 function drawBestScenario(doc: PDFKit.PDFDocument, cursor: Cursor, scenario: SimulationScenarioResult) {
   sectionHeader(doc, cursor, "Best-Fit Scenario", "The path our model rates as your strongest current option.");
   const width = contentWidth(doc);
-  const cardHeight = 96;
+  const contentX = MARGIN + 116;
+  const contentWidthPx = width - 140;
+  const paddingTop = 16;
+  const paddingBottom = 16;
+
+  doc.font("Helvetica-Bold").fontSize(13);
+  const nameHeight = clampedTextHeight(doc, scenario.name, contentWidthPx, 2);
+
+  const subtitleText = `Salary projection: ${scenario.salaryProjection}   ·   Timeline: ${scenario.timelineToGoal}`;
+  doc.font("Helvetica").fontSize(9.5);
+  const subtitleHeight = clampedTextHeight(doc, subtitleText, contentWidthPx, 2);
+
+  const metricEntries = Object.entries(scenario.metrics);
+  const metricGap = 10;
+  const metricWidth = (contentWidthPx - metricGap * (metricEntries.length - 1)) / metricEntries.length;
+  doc.font("Helvetica-Bold").fontSize(8.5);
+  const metricValueHeight = doc.currentLineHeight(true) * 2;
+  const metricLabelHeight = 11;
+  const metricsBlockHeight = metricLabelHeight + 4 + metricValueHeight;
+
+  const contentHeight = paddingTop + nameHeight + 8 + subtitleHeight + 14 + metricsBlockHeight + paddingBottom;
+  const ringSpan = 34 * 2 + 24;
+  const cardHeight = Math.max(contentHeight, ringSpan);
   ensureSpace(doc, cursor, cardHeight);
 
   const gradient = doc.linearGradient(MARGIN, cursor.y, MARGIN + width, cursor.y + cardHeight);
@@ -589,29 +621,32 @@ function drawBestScenario(doc: PDFKit.PDFDocument, cursor: Cursor, scenario: Sim
     label: "Success"
   });
 
-  doc.fillColor(COLOR.ink).font("Helvetica-Bold").fontSize(13).text(scenario.name, MARGIN + 116, cursor.y + 16, {
-    width: width - 140
+  let textY = cursor.y + paddingTop;
+  doc.fillColor(COLOR.ink).font("Helvetica-Bold").fontSize(13).text(scenario.name, contentX, textY, {
+    width: contentWidthPx,
+    height: nameHeight,
+    ellipsis: true
   });
-  doc
-    .fillColor(COLOR.muted)
-    .font("Helvetica")
-    .fontSize(9.5)
-    .text(`Salary projection: ${scenario.salaryProjection}   ·   Timeline: ${scenario.timelineToGoal}`, MARGIN + 116, cursor.y + 38, {
-      width: width - 140
-    });
+  textY += nameHeight + 8;
 
-  const metricEntries = Object.entries(scenario.metrics);
-  const metricGap = 10;
-  const metricWidth = (width - 140 - metricGap * (metricEntries.length - 1)) / metricEntries.length;
+  doc.fillColor(COLOR.muted).font("Helvetica").fontSize(9.5).text(subtitleText, contentX, textY, {
+    width: contentWidthPx,
+    height: subtitleHeight,
+    ellipsis: true
+  });
+  textY += subtitleHeight + 14;
+
   metricEntries.forEach(([key, value], index) => {
-    const x = MARGIN + 116 + index * (metricWidth + metricGap);
+    const x = contentX + index * (metricWidth + metricGap);
     const label = key.replace(/([A-Z])/g, " $1").trim().toUpperCase();
-    doc.fillColor(COLOR.muted).font("Helvetica").fontSize(7).text(label, x, cursor.y + 58, {
-      width: metricWidth + metricGap,
-      lineBreak: false
-    });
-    doc.fillColor(COLOR.ink).font("Helvetica-Bold").fontSize(9.5).text(value, x, cursor.y + 71, {
+    doc.fillColor(COLOR.muted).font("Helvetica").fontSize(7).text(label, x, textY, {
       width: metricWidth,
+      height: metricLabelHeight,
+      ellipsis: true
+    });
+    doc.fillColor(COLOR.ink).font("Helvetica-Bold").fontSize(8.5).text(value, x, textY + metricLabelHeight + 4, {
+      width: metricWidth,
+      height: metricValueHeight,
       ellipsis: true
     });
   });
