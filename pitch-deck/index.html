@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CareerTwin AI — Pitch Deck</title>
+<style>
+  :root {
+    --accent: #7c5cff;
+    --accent-mid: #a855f7;
+    --accent-2: #06b6d4;
+    --accent-3: #f59e0b;
+    --success: #10b981;
+    --danger: #f43f5e;
+    --ink: #171426;
+    --muted: #6b6b80;
+    --surface: #ffffff;
+    --surface-soft: #f1eefb;
+    --border: #e3ddf5;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #0b0a14;
+    color: var(--ink);
+    overflow: hidden;
+  }
+
+  .deck {
+    height: 100vh;
+    width: 100vw;
+    position: relative;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    background: var(--surface);
+    padding: 64px 88px;
+    aspect-ratio: 16 / 9;
+    margin: 0 auto;
+  }
+
+  .slide.active { display: flex; }
+
+  .slide-kicker {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  .slide h1 {
+    font-size: 44px;
+    line-height: 1.1;
+    margin: 0 0 16px;
+    font-weight: 800;
+    color: var(--ink);
+  }
+
+  .slide h2 {
+    font-size: 34px;
+    margin: 0 0 24px;
+    font-weight: 800;
+  }
+
+  .slide p.lede {
+    font-size: 19px;
+    color: var(--muted);
+    max-width: 760px;
+    line-height: 1.5;
+    margin: 0 0 28px;
+  }
+
+  .gradient-text {
+    background: linear-gradient(120deg, var(--accent), var(--accent-mid), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* ---------- Slide 1: Title ---------- */
+  .slide-title {
+    justify-content: center;
+    align-items: flex-start;
+    background-color: var(--surface);
+    background-image: radial-gradient(circle at 15% 20%, rgba(124,92,255,0.12), transparent 45%),
+                radial-gradient(circle at 85% 80%, rgba(6,182,212,0.12), transparent 45%);
+  }
+  .slide-title .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 36px;
+    text-transform: uppercase;
+  }
+  .slide-title .logo-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  }
+  .slide-title h1 {
+    font-size: 64px;
+    margin-bottom: 8px;
+  }
+  .slide-title .tagline {
+    font-size: 22px;
+    color: var(--muted);
+    margin-bottom: 48px;
+    max-width: 700px;
+  }
+  .meta-row {
+    display: flex;
+    gap: 48px;
+    margin-top: auto;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    width: 100%;
+  }
+  .meta-block .meta-label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .meta-block .meta-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .editable-hint {
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .deck-link {
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-color: rgba(124, 92, 255, 0.4);
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+  .deck-link:hover { text-decoration-color: var(--accent); }
+  .deck-link-light {
+    color: white;
+    text-decoration: underline;
+    text-decoration-color: rgba(255, 255, 255, 0.55);
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+  .deck-link-light:hover { text-decoration-color: white; }
+
+  /* ---------- Problem / pain grid ---------- */
+  .pain-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 8px;
+  }
+  .pain-card {
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+  }
+  .pain-card .icon {
+    font-size: 26px;
+    margin-bottom: 14px;
+    display: block;
+  }
+  .pain-card h3 {
+    font-size: 16px;
+    margin: 0 0 8px;
+    font-weight: 700;
+  }
+  .pain-card p {
+    font-size: 13.5px;
+    color: var(--muted);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* ---------- Solution ---------- */
+  .solution-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-top: 12px;
+  }
+  .solution-card {
+    border-radius: 16px;
+    padding: 20px;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .solution-card .icon { font-size: 24px; }
+  .solution-card h3 { font-size: 15px; margin: 0; font-weight: 700; }
+  .solution-card p { font-size: 12.5px; margin: 0; opacity: 0.92; line-height: 1.45; }
+  .sc-1 { background: linear-gradient(135deg, var(--accent), var(--accent-mid)); }
+  .sc-2 { background: linear-gradient(135deg, var(--accent-mid), var(--accent-2)); }
+  .sc-3 { background: linear-gradient(135deg, var(--accent-2), var(--success)); }
+  .sc-4 { background: linear-gradient(135deg, var(--accent-3), var(--danger)); }
+
+  /* ---------- What we built ---------- */
+  .feature-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-top: 8px;
+  }
+  .feature-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+  }
+  .feature-item .badge {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--surface-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+  .feature-item h4 { margin: 0 0 4px; font-size: 14.5px; font-weight: 700; }
+  .feature-item p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+
+  /* ---------- Tech stack ---------- */
+  .stack-groups {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 22px;
+    margin-top: 8px;
+  }
+  .stack-group h4 {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 800;
+    margin: 0 0 12px;
+  }
+  .pill-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill {
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 7px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  /* ---------- Market ---------- */
+  .market-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin: 8px 0 28px;
+  }
+  .stat-card {
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: left;
+  }
+  .stat-card .stat-num {
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--ink);
+    display: block;
+  }
+  .stat-card .stat-label {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .stat-note {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 600;
+    margin-top: 20px;
+  }
+
+  /* ---------- Roadmap ---------- */
+  .roadmap-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-top: 8px;
+  }
+  .roadmap-card {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    background: var(--surface);
+  }
+  .roadmap-card .stage-label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 800;
+    margin-bottom: 10px;
+  }
+  .roadmap-card ul { margin: 0; padding-left: 18px; }
+  .roadmap-card li { font-size: 13px; color: var(--muted); margin-bottom: 8px; line-height: 1.4; }
+  .stage-now { color: var(--success); }
+  .stage-next { color: var(--accent-3); }
+  .stage-later { color: var(--accent); }
+
+  .ask-banner {
+    margin-top: 24px;
+    border-radius: 16px;
+    padding: 22px 26px;
+    background: linear-gradient(120deg, var(--accent), var(--accent-2));
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .ask-banner .ask-title { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+  .ask-banner .ask-sub { font-size: 13px; opacity: 0.92; }
+
+  .page-footer {
+    margin-top: auto;
+    padding-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+  }
+
+  /* ---------- Nav controls (hidden on print) ---------- */
+  .nav-controls {
+    position: fixed;
+    bottom: 24px;
+    right: 32px;
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+  }
+  .nav-controls button {
+    background: rgba(255,255,255,0.12);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+  }
+  .nav-controls button:hover { background: rgba(255,255,255,0.22); }
+  .slide-counter {
+    position: fixed;
+    bottom: 28px;
+    left: 32px;
+    color: rgba(255,255,255,0.6);
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 10;
+  }
+
+  @media print {
+    body { background: white; overflow: visible; }
+    .nav-controls, .slide-counter { display: none !important; }
+    .slide {
+      display: flex !important;
+      position: relative;
+      page-break-after: always;
+      width: 100%;
+      height: 100vh;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="deck" id="deck">
+
+  <!-- SLIDE 1: TITLE -->
+  <section class="slide slide-title active">
+    <div class="brand"><span class="logo-dot"></span> CareerTwin AI</div>
+    <h1><span class="gradient-text">CareerTwin AI</span></h1>
+    <p class="tagline">Your career, simulated before you commit. A living digital twin that scores your professional presence and predicts what happens next.</p>
+    <div class="meta-row">
+      <div class="meta-block">
+        <div class="meta-label">Team Name</div>
+        <div class="meta-value">Codex Crafters</div>
+      </div>
+      <div class="meta-block">
+        <div class="meta-label">Team Members</div>
+        <div class="meta-value">Bhavya Kukreja · Tarun Tailor</div>
+      </div>
+      <div class="meta-block">
+        <div class="meta-label">Event / Date</div>
+        <div class="meta-value">OpenAI Codex Hackathon · 19/07/2026</div>
+      </div>
+      <div class="meta-block">
+        <div class="meta-label">Live Product</div>
+        <div class="meta-value"><a href="https://career-twin-ai-web.vercel.app/" target="_blank" class="deck-link">career-twin-ai-web.vercel.app ↗</a></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 2: PROBLEM -->
+  <section class="slide">
+    <div class="slide-kicker">01 · The Problem</div>
+    <h2>Career advice today is generic, expensive, or nonexistent</h2>
+    <p class="lede">Everyone has a resume. Almost nobody has a career strategist. The tools that exist tell you where you've been — none of them tell you how ready you are, or what happens next.</p>
+    <div class="pain-grid">
+      <div class="pain-card">
+        <span class="icon">🧭</span>
+        <h3>No personalized direction</h3>
+        <p>Job boards and LinkedIn show what roles exist — not whether you're actually ready for them, or how to close the gap.</p>
+      </div>
+      <div class="pain-card">
+        <span class="icon">💸</span>
+        <h3>Real coaching is expensive</h3>
+        <p>A human career coach costs hundreds per session. Most students and early professionals never get that feedback loop.</p>
+      </div>
+      <div class="pain-card">
+        <span class="icon">🎲</span>
+        <h3>Decisions made on guesswork</h3>
+        <p>Switching roles, asking for a promotion, or pivoting industries is a leap of faith — there's no way to simulate the outcome first.</p>
+      </div>
+    </div>
+    <div class="page-footer"><span>CareerTwin AI · Pitch Deck</span><span>2 / 7</span></div>
+  </section>
+
+  <!-- SLIDE 3: SOLUTION -->
+  <section class="slide">
+    <div class="slide-kicker">02 · The Solution</div>
+    <h2>A living digital twin of your professional self</h2>
+    <p class="lede">CareerTwin AI imports what already exists about you, builds an AI-scored profile, and simulates real career decisions — before you make them.</p>
+    <div class="solution-row">
+      <div class="solution-card sc-1">
+        <span class="icon">📥</span>
+        <h3>Import, don't type</h3>
+        <p>Upload a resume or paste LinkedIn/GitHub/portfolio URLs — AI extracts and fills your profile automatically.</p>
+      </div>
+      <div class="solution-card sc-2">
+        <span class="icon">🎯</span>
+        <h3>Career Scorecard</h3>
+        <p>Recruiter-grade scoring across resume, ATS, LinkedIn, GitHub, and portfolio — each with a "why" and a fix.</p>
+      </div>
+      <div class="solution-card sc-3">
+        <span class="icon">🔮</span>
+        <h3>Career Simulation</h3>
+        <p>Model any career move in plain English and get success probability, salary projection, and skill gaps.</p>
+      </div>
+      <div class="solution-card sc-4">
+        <span class="icon">📄</span>
+        <h3>Shareable Report</h3>
+        <p>A polished, visual PDF report you can hand to a mentor, manager, or keep for yourself.</p>
+      </div>
+    </div>
+    <div class="page-footer"><span>CareerTwin AI · Pitch Deck</span><span>3 / 7</span></div>
+  </section>
+
+  <!-- SLIDE 4: WHAT WE BUILT -->
+  <section class="slide">
+    <div class="slide-kicker">03 · What We Built</div>
+    <h2>A complete, end-to-end product — not a mockup</h2>
+    <p class="lede">Every feature below is live and working in the deployed product today.</p>
+    <div class="feature-list">
+      <div class="feature-item">
+        <span class="badge">🧬</span>
+        <div><h4>Adaptive onboarding</h4><p>Tailored fields, reflection questions, and AI interview for students, working professionals, and people between jobs.</p></div>
+      </div>
+      <div class="feature-item">
+        <span class="badge">🤖</span>
+        <div><h4>Real AI interview</h4><p>Gemini-powered conversation that adapts to the profile, feeding richer context into the Twin.</p></div>
+      </div>
+      <div class="feature-item">
+        <span class="badge">📊</span>
+        <div><h4>Interactive dashboard</h4><p>Career Twin summary, scorecards, radar charts, and per-source analysis (resume, LinkedIn, GitHub, portfolio).</p></div>
+      </div>
+      <div class="feature-item">
+        <span class="badge">🧪</span>
+        <div><h4>Custom simulations</h4><p>Type any scenario in natural language and get a modeled outcome — not a fixed, hardcoded number.</p></div>
+      </div>
+      <div class="feature-item">
+        <span class="badge">🗂️</span>
+        <div><h4>Multi-profile support</h4><p>Create and switch between multiple Career Twins per account (e.g. different career paths).</p></div>
+      </div>
+      <div class="feature-item">
+        <span class="badge">📑</span>
+        <div><h4>Rich PDF reports</h4><p>Dashboard-quality visual reports — score rings, bars, and action plans — downloadable by name.</p></div>
+      </div>
+    </div>
+    <div class="page-footer"><span>CareerTwin AI · Pitch Deck</span><span>4 / 7</span></div>
+  </section>
+
+  <!-- SLIDE 5: TECH STACK -->
+  <section class="slide">
+    <div class="slide-kicker">04 · Tech Stack</div>
+    <h2>Built for speed, shipped to production</h2>
+    <p class="lede">A modern, type-safe stack across a monorepo, deployed and live.</p>
+    <div class="stack-groups">
+      <div class="stack-group">
+        <h4>Frontend</h4>
+        <div class="pill-row">
+          <span class="pill">Next.js 16</span>
+          <span class="pill">React 19</span>
+          <span class="pill">TypeScript</span>
+          <span class="pill">Tailwind CSS</span>
+          <span class="pill">Framer Motion</span>
+          <span class="pill">TanStack Query</span>
+          <span class="pill">React Hook Form + Zod</span>
+          <span class="pill">Recharts</span>
+        </div>
+      </div>
+      <div class="stack-group">
+        <h4>Backend</h4>
+        <div class="pill-row">
+          <span class="pill">Node.js</span>
+          <span class="pill">Express 5</span>
+          <span class="pill">TypeScript (ESM)</span>
+          <span class="pill">Zod validation</span>
+          <span class="pill">Pino logging</span>
+        </div>
+      </div>
+      <div class="stack-group">
+        <h4>AI &amp; Data Processing</h4>
+        <div class="pill-row">
+          <span class="pill">Google Gemini</span>
+          <span class="pill">pdf-parse</span>
+          <span class="pill">mammoth (DOCX)</span>
+          <span class="pill">tesseract.js (OCR)</span>
+          <span class="pill">cheerio</span>
+          <span class="pill">GitHub REST API</span>
+        </div>
+      </div>
+      <div class="stack-group">
+        <h4>Platform &amp; Infra</h4>
+        <div class="pill-row">
+          <span class="pill">Clerk Auth</span>
+          <span class="pill">PDFKit</span>
+          <span class="pill">Prisma + PostgreSQL</span>
+          <span class="pill">Vercel</span>
+          <span class="pill">Render</span>
+        </div>
+      </div>
+    </div>
+    <div class="page-footer"><span>CareerTwin AI · Pitch Deck</span><span>5 / 7</span></div>
+  </section>
+
+  <!-- SLIDE 6: MARKET -->
+  <section class="slide">
+    <div class="slide-kicker">05 · Market Opportunity</div>
+    <h2>Career anxiety is universal — the tools haven't caught up</h2>
+    <p class="lede">Every student, every professional considering a switch, and everyone re-entering the workforce is a potential user — there is no dominant AI-native player yet.</p>
+    <div class="market-stats">
+      <div class="stat-card">
+        <span class="stat-num">[X]B+</span>
+        <div class="stat-label">Global online career services &amp; re-skilling market size — [cite your source]</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">3</span>
+        <div class="stat-label">Distinct audiences served from day one: students, working professionals, and people between jobs</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">[X]%</span>
+        <div class="stat-label">Of professionals report feeling "stuck" or unsure about their next career move — [cite your source]</div>
+      </div>
+    </div>
+    <p class="lede" style="margin-bottom:0;">
+      <strong>Why now:</strong> LLMs finally make it possible to read a person's real career footprint (resume, LinkedIn, GitHub, portfolio) and reason over it — turning a generic quiz into a genuinely personalized simulation.
+    </p>
+    <div class="stat-note">Note: replace bracketed figures with sourced stats before presenting.</div>
+    <div class="page-footer"><span>CareerTwin AI · Pitch Deck</span><span>6 / 7</span></div>
+  </section>
+
+  <!-- SLIDE 7: ROADMAP / WHAT'S NEXT -->
+  <section class="slide">
+    <div class="slide-kicker">06 · What's Next</div>
+    <h2>From hackathon MVP to career operating system</h2>
+    <div class="roadmap-row">
+      <div class="roadmap-card">
+        <div class="stage-label stage-now">Now</div>
+        <ul>
+          <li>Persistent storage (Postgres via Prisma) — currently in-memory for the demo</li>
+          <li>Harden GitHub/LinkedIn/portfolio analysis accuracy</li>
+          <li>Polish mobile-responsive dashboard</li>
+        </ul>
+      </div>
+      <div class="roadmap-card">
+        <div class="stage-label stage-next">Next</div>
+        <ul>
+          <li>Real-time job market data feed for salary/skill benchmarks</li>
+          <li>Email/notification nudges to revisit the Twin as skills grow</li>
+          <li>Team/mentor sharing flows for the PDF report</li>
+        </ul>
+      </div>
+      <div class="roadmap-card">
+        <div class="stage-label stage-later">Later</div>
+        <ul>
+          <li>Enterprise/HR version for internal mobility &amp; upskilling programs</li>
+          <li>University career-center partnerships</li>
+          <li>Continuous "career copilot" — always-on, not just a one-time report</li>
+        </ul>
+      </div>
+    </div>
+    <div class="ask-banner">
+      <div>
+        <div class="ask-title">Try it live</div>
+        <div class="ask-sub"><a href="https://career-twin-ai-web.vercel.app/" target="_blank" class="deck-link deck-link-light">career-twin-ai-web.vercel.app ↗</a> — build your Career Twin in under 3 minutes.</div>
+      </div>
+      <div style="font-size:28px;">→</div>
+    </div>
+    <div class="page-footer"><span>CareerTwin AI · Pitch Deck</span><span>7 / 7</span></div>
+  </section>
+
+</div>
+
+<div class="slide-counter" id="counter">1 / 7</div>
+<div class="nav-controls">
+  <button id="prevBtn">← Prev</button>
+  <button id="nextBtn">Next →</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let current = 0;
+
+  function showSlide(i) {
+    slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+    document.getElementById('counter').textContent = (i + 1) + ' / ' + slides.length;
+  }
+
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    current = Math.min(current + 1, slides.length - 1);
+    showSlide(current);
+  });
+  document.getElementById('prevBtn').addEventListener('click', () => {
+    current = Math.max(current - 1, 0);
+    showSlide(current);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') {
+      current = Math.min(current + 1, slides.length - 1);
+      showSlide(current);
+    } else if (e.key === 'ArrowLeft') {
+      current = Math.max(current - 1, 0);
+      showSlide(current);
+    }
+  });
+
+  // Deep-link to a slide via URL hash, e.g. index.html#4
+  const hashSlide = parseInt(window.location.hash.replace('#', ''), 10);
+  if (!Number.isNaN(hashSlide) && hashSlide >= 1 && hashSlide <= slides.length) {
+    current = hashSlide - 1;
+    showSlide(current);
+  }
+</script>
+
+</body>
+</html>

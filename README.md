@@ -7,6 +7,9 @@
 ![Docs](https://img.shields.io/badge/docs-00--10%20complete-6f42c1)
 ![License](https://img.shields.io/badge/license-TBD-orange)
 
+**Live Product:** [career-twin-ai-web.vercel.app](https://career-twin-ai-web.vercel.app/)
+**Pitch Deck:** [careertwin-ai-pitch-deck.vercel.app](https://careertwin-ai-pitch-deck.vercel.app/)
+
 CareerTwin AI is a **career decision intelligence** product that helps professionals evaluate high-stakes career choices using a living digital twin, scenario simulations, and evidence-backed reasoning.  
 This repository currently contains the **complete planning and architecture documentation** needed before implementation.
 
@@ -251,6 +254,8 @@ same way most hosting platforms will run them in production.
 ---
 
 ## Deployment
+
+**Live instances:** web app on [Vercel](https://career-twin-ai-web.vercel.app/), API on Render.
 
 The API (`apps/api`) is a persistent Node/Express server — deploy it anywhere that runs a
 long-lived Node process (Render, Railway, Fly.io, a VM, Docker). The web app (`apps/web`) is a
