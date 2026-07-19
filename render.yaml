@@ -1,10 +1,12 @@
-# Render Blueprint — deploys both services straight from this repo.
+# Render Blueprint — deploys the API straight from this repo.
 # Render docs: https://render.com/docs/blueprint-spec
 #
 # Usage: in the Render dashboard, "New +" -> "Blueprint" -> point at this repo.
-# Render reads this file, provisions both services below, and re-deploys on every push.
+# Render reads this file, provisions the service below, and re-deploys on every push.
 # Secrets marked `sync: false` must be entered once in the Render dashboard after the
 # first deploy — they are intentionally not stored in this file or in git.
+#
+# The frontend (apps/web) is deployed separately on Vercel — see vercel.json.
 services:
   - type: web
     name: careertwin-api
@@ -42,21 +44,3 @@ services:
         value: gemini
       - key: AI_PROVIDER_FALLBACK
         value: mock
-
-  - type: web
-    name: careertwin-web
-    runtime: node
-    plan: starter
-    region: oregon
-    rootDir: .
-    buildCommand: npm run render-build:web
-    startCommand: npm run start:web -- -p $PORT
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: NEXT_PUBLIC_API_BASE_URL
-        sync: false # the careertwin-api service URL above, e.g. https://careertwin-api.onrender.com
-      - key: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-        sync: false
-      - key: CLERK_SECRET_KEY
-        sync: false
